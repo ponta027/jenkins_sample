@@ -76,13 +76,62 @@ node {
 ```
 
 
-  
+## Jenkins Pipelineの使い方
+
+* 新規ジョブ作成
+* 「パイプライン」で作成
+* 「設定」でパイプラインで「Scriped Pipeline」を選択
+* 「ビルド実行」を実行
+* ```tool M3```の設定がないとエラーが出る。
+* Jenkinsの管理 -> Global Tool ConfigurationのMavenの名前を「M3」に設定する。
+* 「ビルド実行」を実行する。
+* ビルドが成功する。
+
+## Pipelineで別Jobを実行
+
+* 実行したいジョブを作成
+  * FreeStyleJobを作成して、sleep 10だけするジョブを作成
+* stage:Resultの後ろに以下のstageを追加
+```
+    stage('downstream'){
+        build job:'FreestyleJob1'
+    } 
+```
+* FreeStyleJobのsleep 300にしてみる。
+* stageが5minで完了するようになった。
+
+## Jobをcurlで実行する
+### 目的
+
+stageからフリースタイルジョブを実行した時に別マシンのジョブを実行したい。
+### 実装方法
+
+まずはcurlで呼び出す。
+
+* API Keyを取得する。
+  * http://localhost:8080/user/${user}/configure
+* curlでビルド実行  
+  ```curl -v -X POST -u ${user}:${apiToken} http://localhost:8080/job/{$projectName}/build```
+* curlでプロジェクトがビルド完了かどうかチェックを行う。  
+``` curl -v -X POST -u ${USER}:${API_TOKEN} ${JENKINS_URL}/job/${PROJECT_NAME}/lastBuild/api/json
+```
+
+※Web API一発で完了まで待ってくれるAPIがないため、自作する必要がある。
+
+非常に管理しづらい。
+
+個人的には
+
+* 別マシンのジョブ用のstageを追加し、build jobを呼び出す。
+* build jobで呼び出すJobはslave登録して、別マシンで動かす
+
+
+
 
 ## reference
 
-[本家サイト](https://www.jenkins.io/doc/book/pipeline/)
-
-https://www.kimullaa.com/entry/2017/01/31/002055
+* [本家サイト](https://www.jenkins.io/doc/book/pipeline/)
+* [ジョブの完了待ちについて記載しているブログ](https://kamatama41.hatenablog.com/entry/2018/03/30/113135)
 
 
 以上
